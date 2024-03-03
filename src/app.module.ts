@@ -9,11 +9,6 @@ import { AppService } from './app.service';
 
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
-import { LocationsModule } from './locations/locations.module';
-import { RolesModule } from './roles/roles.module';
-import { BookingHistoryModule } from './booking-history/booking-history.module';
-import { TicketsModule } from './tickets/tickets.module';
-import { LocationSeatsModule } from './location-seats/location-seats.module';
 
 import { Users } from './users/entities/user.entity';
 import { Event } from './events/entities/event.entity';
@@ -46,12 +41,7 @@ import { LocationSeat } from './location-seats/entities/location-seat.entity';
       logging: process.env.DB_LOGGING === 'true',
     }),
     UsersModule,
-    EventsModule,
-    LocationsModule,
-    RolesModule,
-    BookingHistoryModule,
-    TicketsModule,
-    LocationSeatsModule
+    EventsModule
   ],
   controllers: [AppController],
   providers: [AppService],

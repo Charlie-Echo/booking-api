@@ -3,7 +3,7 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 @Entity()
 export class Ticket {
   @PrimaryColumn({ type: 'varchar', length: 15 })
-  id: number;
+  id: string;
 
   @Column({ type: 'varchar', length: 10 })
   seat: string;

@@ -23,14 +23,13 @@ export class EventsService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
-  async findAll() {
-    let result;
-    try {
-      result = await this.cacheManager.get('C64B4Cfa/Events');
-      if (result) {
-        return result;
-      }
+  async findAll(): Promise<Event[] | []> {
+    let result: Event[]  = await this.cacheManager.get('C64B4Cfa/Events');
+    if (result) {
+      return result;
+    }
 
+    try {
       result = await this.eventRepository.find();
       if (result.length > 0) {
         await this.cacheManager.set('C64B4Cfa/Events', result, 60000);
@@ -42,49 +41,25 @@ export class EventsService {
       throw new HttpException('Something went wrong', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // const params = [];
-    // let currentSeatNumber;
-    // const zone = 'VIP';
-    // for (let index = 1; index <= 10; index++) {
-    //   if (index < 10) {
-    //     currentSeatNumber = zone + '0' + index.toString();
-    //   } else {
-    //     currentSeatNumber = zone + index.toString();
-    //   }
-    //   params.push({
-    //     seat: currentSeatNumber,
-    //     location_id: 2,
-    //     zone: zone,
-    //     row: Math.ceil(index / 10)
-    //   });
-    // }
-
-    // console.log('---------------------------------');
-    // console.log(params);
-    // console.log('---------------------------------');
-
-    // await this.locationSeatRepository.save(params);
-
     return result;
   }
 
-  async findOne(id: number) {
-    let result;
-    result = await this.cacheManager.get(`C64B4Cfa/Event/${id}`);
-    try {
-      if (result) {
-        return result;
-      }
+  async findOne(id: number): Promise<Event & { seats: Ticket[] } | {}> {
+    let result: Event & { seats: Ticket[] } | {} = await this.cacheManager.get(`C64B4Cfa/Event/${id}`);
+    if (result) {
+      return result;
+    }
 
-      result = await this.eventRepository.findBy({ id: id });
-      if (result[0]) {
-        result = result[0];
-        await this.cacheManager.set(`C64B4Cfa/Event/${id}`, result, 60000);
+    try {
+      let queryResult: Event[];
+      queryResult = await this.eventRepository.findBy({ id: id });
+      if (queryResult[0]) {
         const seats = await this.ticketRepository.find({
           where: { event_id: id }
         });
 
-        result.seats = seats;
+        result = { ...queryResult[0], seats: seats };
+        await this.cacheManager.set(`C64B4Cfa/Event/${id}`, result, 60000);
       } else {
         result = {};
       }
@@ -96,7 +71,9 @@ export class EventsService {
     return result;
   }
 
-  async createEvent(createEventDto: CreateEventDto & { organizer: number }) {
+  async createEvent(createEventDto: CreateEventDto & { organizer: number }): Promise<{
+    name: string, description: string, organizer: number, location: number, start_date: Date, end_date: Date
+  }> {
     let params = {
       name: createEventDto.name,
       description: createEventDto.description,
@@ -150,7 +127,9 @@ export class EventsService {
     return params;
   }
 
-  async updateEvent(id: number, updateEventDto: UpdateEventDto, userID: number) {
+  async updateEvent(id: number, updateEventDto: UpdateEventDto, userID: number): Promise<{
+    name?: string, description?: string, organizer?: number, location?: number, start_date?: Date, end_date?: Date
+  }> {
     let params = {
       id: id,
       name: updateEventDto.name ? updateEventDto.name : undefined,
@@ -161,7 +140,7 @@ export class EventsService {
     };
 
     try {
-      const currentData = await this.findOne(id);
+      const currentData = await this.findOne(id) as Event;
       if (!currentData.id) {
         throw new HttpException('Data not found', HttpStatus.BAD_REQUEST);
       } else if (currentData.organizer !== userID) {
@@ -209,8 +188,8 @@ export class EventsService {
 
   async prepareSeatParams(params: {
     eventID: number, locationID: number, inputSeats: unknown, locationSeats?: LocationSeat[], validate?: boolean
-  }) {
-    let tickets = [];
+  }): Promise<Ticket[]> {
+    let tickets: Ticket[] = [];
     if (params.validate && (
       params.inputSeats && params.inputSeats !== 'all' && (!Array.isArray(params.inputSeats) || (
         Array.isArray(params.inputSeats) && params.inputSeats.length <= 0
@@ -251,7 +230,7 @@ export class EventsService {
   async deleteEvent(id: number, userID: number) {
     const params = { id: id };
     try {
-      const currentData = await this.findOne(id);
+      const currentData = await this.findOne(id) as Event;
       if (!currentData.id) {
         throw new HttpException('Data not found', HttpStatus.BAD_REQUEST);
       } else if (currentData.organizer !== userID) {
@@ -313,12 +292,9 @@ export class EventsService {
         whereParams.push({ id: ticket, event_id: params.eventID });
       });
 
-      const availableSeats = await this.ticketRepository.find({
-        where: whereParams
-      });
-
-      if (availableSeats.length <= 0) {
-        throw new HttpException(`This event has no seats`, HttpStatus.BAD_REQUEST);
+      const availableSeats = await this.ticketRepository.find({ where: whereParams });
+      if (availableSeats.length <= 0 || availableSeats.length !== params.tickets.length) {
+        throw new HttpException(`Invalid ticket detected`, HttpStatus.BAD_REQUEST);
       }
 
       let bookingParams = [];
