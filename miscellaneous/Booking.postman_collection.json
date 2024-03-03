@@ -185,7 +185,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"{{EventName}}\",\r\n    \"description\": {{EventDescription}},\r\n    \"location\": {{LocationID}},\r\n    \"seats\": {{Seats}}, // Example: [ \"E01\", \"E02\", ... ] or omitted if want to use location's full capacity\r\n    \"start\": {{StartEpochTime}}, // In millisecond unit\r\n    \"end\": {{EndEpochTime}} // In millisecond unit\r\n}",
+							"raw": "{\r\n    \"name\": \"{{EventName}}\",\r\n    \"description\": \"{{EventDescription}}\",\r\n    \"location\": {{LocationID}},\r\n    \"seats\": {{Seats}}, // Example: [ \"E01\", \"E02\", ... ] or omitted if want to use location's full capacity\r\n    \"start\": {{StartEpochTime}}, // In millisecond unit\r\n    \"end\": {{EndEpochTime}} // In millisecond unit\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -254,7 +254,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{ // You can omit the key(s) that you don't want to change\r\n    \"name\": \"{{EventName}}\",\r\n    \"description\": {{EventDescription}},\r\n    \"location\": {{LocationID}},\r\n    \"seats\": {{Seats}}, // Example: [ \"E01\", \"E02\", ... ] or use \"all\" if want to use location's full capacity\r\n    \"start\": {{StartEpochTime}}, // In millisecond unit\r\n    \"end\": {{EndEpochTime}} // In millisecond unit\r\n}",
+							"raw": "{ // You can omit the key(s) that you don't want to change\r\n    \"name\": \"{{EventName}}\",\r\n    \"description\": \"{{EventDescription}}\",\r\n    \"location\": {{LocationID}},\r\n    \"seats\": {{Seats}}, // Example: [ \"E01\", \"E02\", ... ] or use \"all\" if want to use location's full capacity\r\n    \"start\": {{StartEpochTime}}, // In millisecond unit\r\n    \"end\": {{EndEpochTime}} // In millisecond unit\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
