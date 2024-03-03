@@ -2,7 +2,7 @@ import { Injectable, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository, Not, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
@@ -142,7 +142,7 @@ export class EventsService {
     try {
       const currentData = await this.findOne(id) as Event;
       if (!currentData.id) {
-        throw new HttpException('Data not found', HttpStatus.BAD_REQUEST);
+        throw new HttpException('Event not found', HttpStatus.BAD_REQUEST);
       } else if (currentData.organizer !== userID) {
         throw new HttpException('Credential not match', HttpStatus.FORBIDDEN);
       }
@@ -151,7 +151,7 @@ export class EventsService {
         await this.checkDatetimeConflict({
           start: params.start_date ? params.start_date : currentData.start_date,
           end: params.end_date ? params.end_date : currentData.end_date 
-        });
+        }, id);
       }
 
       if ((params.location && params.location !== currentData.location) || updateEventDto.seats) {
@@ -160,7 +160,7 @@ export class EventsService {
         });
 
         if (soldTickets.length > 0) {
-          throw new HttpException('Cannot change location when the tickets are sold', HttpStatus.UNAUTHORIZED);
+          throw new HttpException('Cannot change location or seats when the tickets are sold', HttpStatus.UNAUTHORIZED);
         }
 
         const tickets = await this.prepareSeatParams({
@@ -232,7 +232,7 @@ export class EventsService {
     try {
       const currentData = await this.findOne(id) as Event;
       if (!currentData.id) {
-        throw new HttpException('Data not found', HttpStatus.BAD_REQUEST);
+        throw new HttpException('Event not found', HttpStatus.BAD_REQUEST);
       } else if (currentData.organizer !== userID) {
         throw new HttpException('Credential not match', HttpStatus.FORBIDDEN);
       }
@@ -258,7 +258,7 @@ export class EventsService {
     return params;
   }
 
-  async checkDatetimeConflict(date: { start: Date, end: Date }) {
+  async checkDatetimeConflict(date: { start: Date, end: Date }, eventID?: number) {
     try {
       if (date.start >= date.end) {
         throw new HttpException('Start date cannot be more or equal the end date', HttpStatus.BAD_REQUEST);
@@ -266,8 +266,9 @@ export class EventsService {
 
       const result = await this.eventRepository.find({
         where: {
-          start_date: MoreThanOrEqual(date.start),
-          end_date: LessThanOrEqual(date.end)
+          id: eventID ? Not(eventID) : undefined,
+          start_date: LessThanOrEqual(date.end),
+          end_date: MoreThanOrEqual(date.start)
         }
       });
 
